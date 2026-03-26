@@ -1,0 +1,34 @@
+{
+  "name": "devpost-mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for querying Devpost.com. Search hackathons, fetch winners, analyze tech stack trends.",
+  "main": "dist/index.js",
+  "bin": {
+    "devpost-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "devpost",
+    "hackathon",
+    "model-context-protocol",
+    "claude-code"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
