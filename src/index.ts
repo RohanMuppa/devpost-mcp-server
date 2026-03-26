@@ -7,6 +7,12 @@ import {
   getHackathonWinners,
   getProjectDetails,
   searchProjects,
+  checkIdeaExists,
+  analyzeWinningStacks,
+  analyzeSponsorTracks,
+  getSubmissionTemplate,
+  compareHackathons,
+  trendingTools,
 } from "./scraper.js";
 
 const server = new McpServer({
@@ -180,6 +186,231 @@ server.tool(
           {
             type: "text" as const,
             text: `Error searching projects: ${error instanceof Error ? error.message : "Could not parse Devpost response"}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// --- Tool: check_idea_exists ---
+server.tool(
+  "check_idea_exists",
+  "Check if a project idea already exists on Devpost. Searches for similar projects and returns top matches with details including prizes won and tech stack.",
+  {
+    idea: z.string().describe("Description of the project idea to search for"),
+  },
+  async ({ idea }) => {
+    try {
+      const results = await checkIdeaExists(idea);
+      if (results.length === 0) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `No similar projects found for "${idea}". This idea may be novel!`,
+            },
+          ],
+        };
+      }
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(results, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error checking idea: ${error instanceof Error ? error.message : "Could not parse Devpost response"}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// --- Tool: analyze_winning_stacks ---
+server.tool(
+  "analyze_winning_stacks",
+  "Analyze the tech stacks used by winning projects of a hackathon. Returns frequency counts and the most common technologies.",
+  {
+    hackathon_slug: z
+      .string()
+      .describe(
+        'The hackathon slug from the Devpost URL, e.g., "hackillinois-2026"'
+      ),
+  },
+  async ({ hackathon_slug }) => {
+    try {
+      const result = await analyzeWinningStacks(hackathon_slug);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error analyzing winning stacks: ${error instanceof Error ? error.message : "Could not parse Devpost response"}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// --- Tool: analyze_sponsor_tracks ---
+server.tool(
+  "analyze_sponsor_tracks",
+  "Analyze sponsor tracks and prizes for a hackathon. Returns track names, sponsors, prize info, and winner counts per track.",
+  {
+    hackathon_slug: z
+      .string()
+      .describe(
+        'The hackathon slug from the Devpost URL, e.g., "hackillinois-2026"'
+      ),
+  },
+  async ({ hackathon_slug }) => {
+    try {
+      const result = await analyzeSponsorTracks(hackathon_slug);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error analyzing sponsor tracks: ${error instanceof Error ? error.message : "Could not parse Devpost response"}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// --- Tool: get_submission_template ---
+server.tool(
+  "get_submission_template",
+  "Analyze a winning project's submission structure as a template. Returns sections, word counts, and formatting patterns.",
+  {
+    project_slug: z
+      .string()
+      .describe(
+        'The project slug from the Devpost URL, e.g., "my-project" from devpost.com/software/my-project'
+      ),
+  },
+  async ({ project_slug }) => {
+    try {
+      const result = await getSubmissionTemplate(project_slug);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error getting submission template: ${error instanceof Error ? error.message : "Could not parse Devpost response"}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// --- Tool: compare_hackathons ---
+server.tool(
+  "compare_hackathons",
+  "Compare two hackathons side by side. Returns participants, prizes, winner counts, top technologies, and shared/unique tech stacks.",
+  {
+    slug_a: z
+      .string()
+      .describe("The slug of the first hackathon to compare"),
+    slug_b: z
+      .string()
+      .describe("The slug of the second hackathon to compare"),
+  },
+  async ({ slug_a, slug_b }) => {
+    try {
+      const result = await compareHackathons(slug_a, slug_b);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error comparing hackathons: ${error instanceof Error ? error.message : "Could not parse Devpost response"}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// --- Tool: trending_tools ---
+server.tool(
+  "trending_tools",
+  "Discover trending tools and frameworks across recent hackathon winners. Scans winners from multiple recent hackathons and aggregates technology usage.",
+  {
+    count: z
+      .number()
+      .optional()
+      .default(10)
+      .describe(
+        "Number of recent hackathons to scan (default: 10). Higher values give more data but take longer."
+      ),
+  },
+  async ({ count }) => {
+    try {
+      const result = await trendingTools(count);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error analyzing trending tools: ${error instanceof Error ? error.message : "Could not parse Devpost response"}`,
           },
         ],
         isError: true,
